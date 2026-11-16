@@ -1,0 +1,175 @@
+---
+title: "Assignment_5"
+author: "Annette Camacho"
+date: "2026-10-23"
+output: pdf_document
+---
+
+```{r setup}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+```
+
+### Exercise 1
+
+Convert the following to date or date/time objects.
+
+**a)** September 13, 2010.
+
+```{r}
+mdy('September 13, 2010')
+```
+
+This format works 
+
+**b)** Sept 13, 2010.
+
+```{r}
+mdy('Sep 13 2010')
+#mdy('sept 13,2010')
+```
+If we run the code with 'sept 13, 2010' than r-studio won't recognize sept as September so we must change it to either sep or september. 
+
+**c)** Sep 13, 2010.
+
+```{r}
+mdy('sep 13, 2010')
+```
+
+This format works. 
+
+**d)** S 13, 2010. Comment on the month abbreviation needs.
+
+```{r}
+mdy('sep 13, 2010')
+#mdy('s 13, 2010')
+```
+
+The abbreviation needed for the code to run is sep. 
+
+**e)** 07-Dec-1941.
+
+```{r}
+dmy('07-Dec-1941')
+```
+
+The code will work even with dashes. 
+
+**f)** 1-5-1998. Comment on why you might be wrong.
+
+```{r}
+dmy('1-5-1998')
+mdy('1-5-1998')
+```
+
+This could be wrong because it could be January 5th, 1998 or May 1st, 1998. 
+
+**g)** 21-5-1998. Comment on why you know you are correct.
+
+```{r}
+dmy('21-5-1998')
+```
+
+This is correct because we don't have 21 months so it must be the day. 
+
+**h)** 2020-May-5 10:30 am
+
+```{r}
+ymd_hm('2020-May-5 10:30 am')
+```
+
+The date and time is printed but it automatically defaults to UTC. 
+
+**i)** 2020-May-5 10:30 am PDT (ex Seattle)
+
+```{r}
+ymd_hm('2020-May-5, 10:30 am', tz = 'Canada/Pacific')
+```
+
+We used Canada/Pacific to get the PDT. 
+
+**j)** 2020-May-5 10:30 am AST (ex Puerto Rico)
+
+```{r}
+ymd_hm('2020-May-5 10:30 am', tz = 'America/Puerto_Rico')
+```
+
+I used America/Puerto_Rico to get the AST time zone. 
+
+### Exercise 3 
+
+Suppose you have arranged for a phone call to be at 3 pm on May 8, 2025 at Arizona time. However, the recipient will be in Auckland, NZ. What time will it be there? 
+
+```{r}
+Arizona <- mdy_h ('May 8 2025, 3 PM', tz = 'US/Arizona')
+with_tz(Arizona, tzone = 'Pacific/Auckland')
+```
+
+The phone call will happen on May 9th at 10 am. 
+
+### Exercise 4 
+
+From this book's [GitHub](https://github.com/BuscagliaR/STA_444_v2/) directory, navigate to the `data-raw` directory and then download the `Pulliam_Airport_Weather_Station.csv` data file. (*There are several weather station files. Make sure you get the correct one!*)  There is a `DATE` column (is it of type `date` when you import the data?) as well as the Maximum and Minimum temperature. For the last 5 years of data included in the file, plot the time series of daily maximum temperature with date on the x-axis. Write your code so that it will work if I update the date set. *Hint: Find the maximum date in the data set and then subtract 5 years. Will there be a difference if you use `dyears(5)` vs `years(5)`? Which seems more appropriate here?*
+
+```{r}
+library(readr)
+Pulliam_Airport_Weather_Station <- read.csv("/Users/ac5288/OneDrive - Northern Arizona University/Documents/STA_445/data-raw/Pulliam_Airport_Weather_Station.csv")
+max(Pulliam_Airport_Weather_Station$DATE)
+current <- make_date(year = 2019, month = 09, day = 15)
+last5 <- current-years(5)
+last5
+
+Last5Years <- Pulliam_Airport_Weather_Station %>%
+  filter(between(DATE, '2014-09-15', '2019-09-15')) %>%
+  mutate(date = ymd(DATE))
+
+library(ggplot2)
+ggplot(Last5Years, aes(x = date, y = TMAX)) + geom_point() + labs(
+  title = 'Daily Max Temp. at Pulliam Airport', 
+  )
+```
+
+I Have graphed the daily maximum temperature at Pulliam Airport from the last five years.
+
+### Exercise 5 
+
+It turns out there is some interesting periodicity regarding the number of births on particular days of the year.
+
+**a)** Using the `mosaicData` package, load the data set `Births78` which records the number of children born on each day in the United States in 1978. Because this problem is intended to show how to calculate the information using the `date`, remove all the columns *except* `date` and `births`.
+
+```{r}
+library(mosaicData)
+data(Births78)
+Births78 <- Births78 %>%
+  select(date, births)
+head(Births78)
+```
+
+I have removed all the columns except 'date' and 'births'. 
+
+**b)** Graph the number of `births` vs the `date` with date on the x-axis. What stands out to you? Why do you think we have this trend?
+
+```{r}
+ggplot(Births78, aes(x = date, y = births)) + geom_point()
+```
+
+What stands out to me from the graph is there is a pattern. For the most part the birthing rate is increasing with some dips during April 1978 and October 1978. The graph also displays two different groups between the babies being born. Some are within the 7000 to 8000 range while another group is between the 9000 to 10000 range.   
+
+**c)** To test your assumption, we need to figure out the what day of the week each observation is. Use `dplyr::mutate` to add a new column named `dow` that is the day of the week (Monday, Tuesday, etc). This calculation will involve some function in the `lubridate` package and the `date` column.
+
+```{r}
+Births78 <- Births78 %>%
+  dplyr::mutate(dow = wday(date, label = TRUE))
+head(Births78)
+```
+
+I have added the day of the week column to the data set.
+
+**d)** Plot the data with the point color being determined by the day of the week variable.
+
+```{r}
+ggplot(Births78, aes(x = date, y = births)) + geom_point(aes(colour = dow))
+```
+
+After coloring the data points by the day of the week the baby was born we can see a clear pattern the graph was displaying. The lower section of the data points are babies born on Saturday and Sunday while the upper section of the data points are babies born between Monday and Friday. Majority of babies are born throughout the weekday as opposed to the weekend. 
