@@ -1,2 +1,5 @@
 # MyFirstRepository2
-STA 445
+
+## Annette Camacho 
+
+### STA 445: coding class 
